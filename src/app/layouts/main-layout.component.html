@@ -1,0 +1,124 @@
+<div class="min-h-screen bg-gray-50 flex">
+  <!-- Sidebar Desktop -->
+  <aside class="hidden sm:flex flex-col w-64 bg-taxi-black text-white">
+    <div class="p-6 border-b border-gray-700 text-center">
+      <div class="text-4xl mb-2">🚕</div>
+      <div class="text-2xl font-bold text-taxi-yellow">Taxi Peifer</div>
+      <p class="text-gray-400 text-xs mt-1">Sistema de Gestión</p>
+    </div>
+
+    <nav class="flex-1 p-4 space-y-2">
+      <a
+        routerLink="/dashboard"
+        routerLinkActive="bg-taxi-yellow text-black"
+        class="flex items-center p-3 rounded-lg hover:bg-taxi-yellow hover:text-black transition-all"
+      >
+        Dashboard
+      </a>
+
+      <a
+        routerLink="/carreras"
+        routerLinkActive="bg-taxi-yellow text-black"
+        class="flex items-center p-3 rounded-lg hover:bg-taxi-yellow hover:text-black transition-all"
+      >
+        Carreras
+      </a>
+    </nav>
+
+    <div class="p-4 border-t border-gray-700">
+      <button (click)="logout()" class="w-full btn-taxi-outline">
+        Cerrar sesión
+      </button>
+    </div>
+  </aside>
+
+  <!-- CONTENIDO -->
+  <div class="flex-1 flex flex-col">
+    <!-- HEADER -->
+    <header class="bg-white shadow px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center">
+        <!-- BOTÓN MOBILE -->
+        <button (click)="toggleMobileMenu()" class="sm:hidden mr-3">☰</button>
+
+        <h1 class="text-xl font-bold">{{ title }}</h1>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div
+          class="w-8 h-8 bg-taxi-yellow rounded-full flex items-center justify-center font-bold"
+        >
+          {{
+            (currentUser$ | async)?.username?.charAt(0)?.toUpperCase() || "U"
+          }}
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="p-4 flex-1">
+      <ng-content></ng-content>
+    </main>
+  </div>
+</div>
+
+<!-- OVERLAY -->
+<div
+  *ngIf="mobileMenuOpen"
+  class="fixed inset-0 bg-black bg-opacity-50 z-50 transition-opacity duration-300"
+  (click)="toggleMobileMenu()"
+>
+  <!-- SIDEBAR MOBILE -->
+  <div
+    class="w-64 h-full bg-taxi-black text-white transform transition-transform duration-300"
+    [class.translate-x-0]="mobileMenuOpen"
+    [class.-translate-x-full]="!mobileMenuOpen"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="p-6 border-b border-gray-700 text-center">
+      <div class="text-3xl">🚕</div>
+      <div class="text-xl font-bold text-taxi-yellow">TaxiApp</div>
+    </div>
+
+    <nav class="p-4 space-y-2">
+      <!-- Esto ya funciona si RouterModule está importado -->
+      <a
+        routerLink="/dashboard"
+        routerLinkActive="bg-taxi-yellow text-black"
+        class="flex items-center p-3 rounded-lg hover:bg-taxi-yellow hover:text-black transition-all"
+      >
+        Dashboard
+      </a>
+
+      <a
+        routerLink="/carreras"
+        routerLinkActive="bg-taxi-yellow text-black"
+        class="flex items-center p-3 rounded-lg hover:bg-taxi-yellow hover:text-black transition-all"
+      >
+        Carreras
+      </a>
+    </nav>
+
+    <div class="absolute bottom-0 w-full p-4 border-t border-gray-700">
+      <!-- 👇 BOTÓN DE INSTALAR AQUÍ -->
+      <button
+        *ngIf="showInstallPrompt"
+        (click)="installApp()"
+        class="w-full btn-taxi mb-2 flex items-center justify-center gap-2"
+      >
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            d="M5 9h10v1H5V9zm8-4H7v1h6V5zm-3 7h1v3h-1v-3zm-3 0h1v3H7v-3z"
+          />
+          <path
+            fill-rule="evenodd"
+            d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 0h8v12H6V4z"
+          />
+        </svg>
+        Instalar App
+      </button>
+      <button (click)="logout()" class="w-full btn-taxi-outline">
+        Cerrar sesión
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,1 +1,29 @@
 /* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-sans text-gray-800;
+  }
+}
+
+@layer components {
+  .btn-taxi {
+    @apply bg-taxi-yellow text-taxi-black font-semibold py-3 px-6 rounded-lg transition-all duration-300 hover:bg-yellow-500 hover:shadow-lg transform hover:-translate-y-0.5;
+  }
+  
+  .btn-taxi-outline {
+    @apply border-2 border-taxi-yellow text-taxi-yellow font-semibold py-3 px-6 rounded-lg transition-all duration-300 hover:bg-taxi-yellow hover:text-taxi-black hover:shadow-lg;
+  }
+  
+  .card-taxi {
+    @apply bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden;
+  }
+  
+  .input-taxi {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-taxi-yellow focus:border-transparent transition-all;
+  }
+}

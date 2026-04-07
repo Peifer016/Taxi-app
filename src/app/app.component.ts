@@ -1,13 +1,10 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterOutlet } from '@angular/router';  // 👈 CAMBIA A RouterOutlet
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  imports: [RouterOutlet],  // 👈 CAMBIA DashboardComponent por RouterOutlet
+  template: `<router-outlet></router-outlet>`  // 👈 CAMBIA a router-outlet
 })
-export class AppComponent {
-  title = 'taxi-app';
-}
+export class AppComponent {}
