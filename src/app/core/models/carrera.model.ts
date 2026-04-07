@@ -3,9 +3,9 @@ export interface Carrera {
   cliente: string;
   descripcion: string;
   precio: number;
-  estado: string; // 'colocado', 'cancelado', etc.
-  fechaRegistro: Date;
-  fechaPago?: Date;
+  estado: string;
+  fechaRegistro: string;  // ← Cambiar de Date a string
+  fechaPago?: string | null;  // ← Cambiar de Date a string
 }
 
 export interface CreateCarreraDto {
@@ -13,6 +13,6 @@ export interface CreateCarreraDto {
   descripcion: string;
   precio: number;
   estado: string;
-  fecharegistro: Date;
-  fechapago?: Date;
+  fechaRegistro: string | Date;  // Requerido, no puede ser null
+  fechaPago: string | Date | null;  // ✅ Puede ser null si no se selecciona
 }

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Carrera } from '../../core/models/carrera.model';
+import { Carrera, CreateCarreraDto } from '../../core/models/carrera.model';
 import { ApiService } from '../../core/services/api.services';
 import { MainLayoutComponent } from '../../layouts/main-layout.component';
 import { CommonModule } from '@angular/common';
@@ -8,28 +8,32 @@ import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-carreras',
   standalone: true,
-  imports: [
-    CommonModule, // 👈 pipes (date, currency, uppercase, slice)
-    FormsModule, // 👈 ngModel
-    MainLayoutComponent, // 👈 tu layout
-  ],
+  imports: [CommonModule, FormsModule, MainLayoutComponent],
   templateUrl: './carreras.component.html',
 })
 export class CarrerasComponent implements OnInit {
   carreras: Carrera[] = [];
+  carrerasOriginal: Carrera[] = []; // Guardar todas las carreras sin filtrar
   loading = false;
   showModal = false;
   editingCarrera: Carrera | null = null;
   filtro = '';
   estadoFiltro = '';
+  showDeleteModal = false;
+  carreraToDelete: Carrera | null = null;
 
-  formData: any = {
+  // Nuevos filtros de fecha
+  filtroFechaInicio: string = '';
+  filtroFechaFin: string = '';
+  mostrarSoloHoy: boolean = true; // Por defecto mostrar solo hoy
+
+  formData: CreateCarreraDto = {
     cliente: '',
     descripcion: '',
     precio: 0,
     estado: 'colocado',
-    fecharegistro: new Date(),
-    fechapago: null,
+    fechaRegistro: new Date(),
+    fechaPago: null,
   };
 
   constructor(private apiService: ApiService) {}
@@ -42,7 +46,12 @@ export class CarrerasComponent implements OnInit {
     this.loading = true;
     this.apiService.getCarreras().subscribe({
       next: (data) => {
-        this.carreras = data;
+        this.carrerasOriginal = data;
+        // Aplicar filtro de hoy automáticamente
+        this.mostrarSoloHoy = true;
+        this.filtroFechaInicio = '';
+        this.filtroFechaFin = '';
+        this.aplicarFiltros(); // Esto mostrará solo las de hoy
         this.loading = false;
       },
       error: (err) => {
@@ -52,9 +61,11 @@ export class CarrerasComponent implements OnInit {
     });
   }
 
-  get carrerasFiltradas(): Carrera[] {
-    let filtered = this.carreras;
+  // Método para aplicar todos los filtros
+  aplicarFiltros(): void {
+    let filtered = [...this.carrerasOriginal];
 
+    // Filtro por texto (cliente o descripción)
     if (this.filtro) {
       filtered = filtered.filter(
         (c) =>
@@ -63,11 +74,86 @@ export class CarrerasComponent implements OnInit {
       );
     }
 
+    // Filtro por estado (comparar sin importar mayúsculas)
     if (this.estadoFiltro) {
-      filtered = filtered.filter((c) => c.estado === this.estadoFiltro);
+      filtered = filtered.filter(
+        (c) => c.estado.toLowerCase() === this.estadoFiltro.toLowerCase(),
+      );
     }
 
-    return filtered;
+    // Filtro por fecha
+    filtered = this.filtrarPorFecha(filtered);
+
+    this.carreras = filtered;
+  }
+
+  filtrarPorFecha(carreras: Carrera[]): Carrera[] {
+    const hoy = new Date();
+    const año = hoy.getFullYear();
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dia = String(hoy.getDate()).padStart(2, '0');
+    const hoyStr = `${año}-${mes}-${dia}`; // '2026-04-07'
+
+    return carreras.filter((carrera) => {
+      // La fecha ya viene como string "2026-04-07" del backend
+      const fechaRegistroStr = carrera.fechaRegistro;
+
+      // Si está activado "Mostrar solo hoy"
+      if (this.mostrarSoloHoy) {
+        return fechaRegistroStr === hoyStr;
+      }
+
+      // Si hay filtro de fecha inicio y fecha fin
+      if (this.filtroFechaInicio && this.filtroFechaFin) {
+        return (
+          fechaRegistroStr >= this.filtroFechaInicio &&
+          fechaRegistroStr <= this.filtroFechaFin
+        );
+      }
+
+      // Solo fecha inicio
+      if (this.filtroFechaInicio) {
+        return fechaRegistroStr >= this.filtroFechaInicio;
+      }
+
+      // Solo fecha fin
+      if (this.filtroFechaFin) {
+        return fechaRegistroStr <= this.filtroFechaFin;
+      }
+
+      return true;
+    });
+  }
+
+  // Método para limpiar filtros de fecha
+  limpiarFiltrosFecha(): void {
+    this.filtroFechaInicio = '';
+    this.filtroFechaFin = '';
+    this.mostrarSoloHoy = false;
+    this.aplicarFiltros();
+  }
+
+  // Método para mostrar todas las carreras
+  mostrarTodas(): void {
+    this.mostrarSoloHoy = false;
+    this.filtroFechaInicio = '';
+    this.filtroFechaFin = '';
+    this.filtro = '';
+    this.estadoFiltro = '';
+    this.aplicarFiltros();
+  }
+
+  // Método para mostrar solo hoy
+  mostrarHoy(): void {
+    this.mostrarSoloHoy = true;
+    this.filtroFechaInicio = '';
+    this.filtroFechaFin = '';
+    this.aplicarFiltros();
+  }
+
+  // Getters para usar en el template
+  get carrerasFiltradas(): Carrera[] {
+    return this.carreras;
   }
 
   openModal(carrera?: Carrera): void {
@@ -77,9 +163,9 @@ export class CarrerasComponent implements OnInit {
         cliente: carrera.cliente,
         descripcion: carrera.descripcion,
         precio: carrera.precio,
-        estado: carrera.estado,
-        fecharegistro: carrera.fechaRegistro,
-        fechapago: carrera.fechaPago || null,
+        estado: carrera.estado.toLowerCase(), // Normalizar a minúsculas
+        fechaRegistro: carrera.fechaRegistro, // Ya es string "2026-04-07"
+        fechaPago: carrera.fechaPago || null,
       };
     } else {
       this.editingCarrera = null;
@@ -87,29 +173,26 @@ export class CarrerasComponent implements OnInit {
         cliente: '',
         descripcion: '',
         precio: 0,
-        estado: 'colocado',
-        fecharegistro: new Date(),
-        fechapago: null,
+        estado: 'pendiente', // Minúscula
+        fechaRegistro: new Date().toISOString().split('T')[0], // Formato YYYY-MM-DD
+        fechaPago: null,
       };
     }
     this.showModal = true;
   }
-
   closeModal(): void {
     this.showModal = false;
     this.editingCarrera = null;
   }
 
   saveCarrera(): void {
-    // Convertir las fechas al formato que espera el backend (YYYY-MM-DD)
-    const carreraData = {
-      ...this.formData,
-      fechaRegistro: this.formData.fechaRegistro
-        ? new Date(this.formData.fechaRegistro).toISOString().split('T')[0]
-        : null,
-      fechaPago: this.formData.fechaPago
-        ? new Date(this.formData.fechaPago).toISOString().split('T')[0]
-        : null,
+    const carreraData: CreateCarreraDto = {
+      cliente: this.formData.cliente,
+      descripcion: this.formData.descripcion,
+      precio: this.formData.precio,
+      estado: this.formData.estado,
+      fechaRegistro: this.formData.fechaRegistro, // Ya viene en formato correcto
+      fechaPago: this.formData.fechaPago || null,
     };
 
     if (this.editingCarrera) {
@@ -133,13 +216,27 @@ export class CarrerasComponent implements OnInit {
     }
   }
 
-  deleteCarrera(id: number): void {
-    if (confirm('¿Está seguro de eliminar esta carrera?')) {
-      this.apiService.deleteCarrera(id).subscribe({
-        next: () => this.loadCarreras(),
+  // Después - con el modal
+  deleteCarrera(carrera: Carrera): void {
+    this.carreraToDelete = carrera;
+    this.showDeleteModal = true;
+  }
+
+  confirmDelete(): void {
+    if (this.carreraToDelete) {
+      this.apiService.deleteCarrera(this.carreraToDelete.id).subscribe({
+        next: () => {
+          this.loadCarreras();
+          this.closeDeleteModal();
+        },
         error: (err) => console.error('Error deleting:', err),
       });
     }
+  }
+
+  closeDeleteModal(): void {
+    this.showDeleteModal = false;
+    this.carreraToDelete = null;
   }
 
   getEstadoClass(estado: string): string {
