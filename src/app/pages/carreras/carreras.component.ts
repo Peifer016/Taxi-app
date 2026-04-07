@@ -101,11 +101,14 @@ export class CarrerasComponent implements OnInit {
   }
 
   saveCarrera(): void {
+    // Convertir las fechas al formato que espera el backend (YYYY-MM-DD)
     const carreraData = {
       ...this.formData,
-      fecharegistro: new Date(this.formData.fecharegistro),
-      fechapago: this.formData.fechapago
-        ? new Date(this.formData.fechapago)
+      fechaRegistro: this.formData.fechaRegistro
+        ? new Date(this.formData.fechaRegistro).toISOString().split('T')[0]
+        : null,
+      fechaPago: this.formData.fechaPago
+        ? new Date(this.formData.fechaPago).toISOString().split('T')[0]
         : null,
     };
 
