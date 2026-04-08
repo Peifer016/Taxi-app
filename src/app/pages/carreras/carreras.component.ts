@@ -263,4 +263,15 @@ export class CarrerasComponent implements OnInit {
     const dia = String(hoy.getDate()).padStart(2, '0');
     return `${año}-${mes}-${dia}`;
   }
+
+  // Agrega este método en tu componente
+  onEstadoChange(estado: string): void {
+    if (estado.toLowerCase() === 'cancelado') {
+      this.formData.fechaPago = this.getFechaLocal();
+    } else if (
+      estado.toLowerCase() !== 'cancelado' &&
+      this.formData.fechaPago !== null
+    ) {
+    }
+  }
 }
