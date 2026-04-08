@@ -149,7 +149,9 @@
     *ngIf="mostrarSoloHoy"
     class="mb-4 p-2 bg-blue-50 text-blue-700 rounded-lg text-sm"
   >
-    📅 Mostrando solo carreras del día de hoy
+    📅 Mostrando estadísticas solo del día de hoy ({{
+      getFechaLocal() | date: "dd/MM/yyyy"
+    }})
   </div>
 
   <!-- Resto del HTML igual (loading, grid de carreras, modal, etc.) -->

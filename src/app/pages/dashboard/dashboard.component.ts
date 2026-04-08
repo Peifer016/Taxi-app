@@ -11,8 +11,8 @@ import { CommonModule } from '@angular/common';
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent implements OnInit {
-  todasLasCarreras: Carrera[] = []; // Guardar todas las carreras originales
-  carrerasFiltradas: Carrera[] = []; // Carreras después del filtro
+  todasLasCarreras: Carrera[] = [];
+  carrerasFiltradas: Carrera[] = [];
   carrerasRecientes: Carrera[] = [];
   loading = true;
 
@@ -44,15 +44,31 @@ export class DashboardComponent implements OnInit {
     this.loadData();
   }
 
-  // Método para filtrar carreras por fecha
+  // 🔧 Función para obtener fecha local en formato YYYY-MM-DD
+  getFechaLocal(): string {
+    const hoy = new Date();
+    const año = hoy.getFullYear();
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dia = String(hoy.getDate()).padStart(2, '0');
+    return `${año}-${mes}-${dia}`;
+  }
+
+  // Método para filtrar carreras por fecha (usando fecha local)
   filtrarCarrerasPorFecha(carreras: Carrera[]): Carrera[] {
-    const hoyStr = new Date().toISOString().split('T')[0];
+    const hoyStr = this.getFechaLocal(); // 👈 Usar fecha local
+
+    console.log('Fecha local hoy:', hoyStr);
+    console.log('Carreras a filtrar:', carreras.map(c => ({ id: c.id, fecha: c.fechaRegistro })));
 
     return carreras.filter((carrera) => {
       const fechaRegistroStr = carrera.fechaRegistro;
 
       if (this.mostrarSoloHoy) {
-        return fechaRegistroStr === hoyStr;
+        const coincide = fechaRegistroStr === hoyStr;
+        if (coincide) {
+          console.log(`Carrera ${carrera.id} coincide: ${fechaRegistroStr} === ${hoyStr}`);
+        }
+        return coincide;
       }
 
       if (this.filtroFechaInicio && this.filtroFechaFin) {
@@ -79,7 +95,7 @@ export class DashboardComponent implements OnInit {
     this.mostrarSoloHoy = true;
     this.filtroFechaInicio = '';
     this.filtroFechaFin = '';
-    this.aplicarFiltros(); // Aplicar filtro sin recargar
+    this.aplicarFiltros();
   }
 
   // Método para mostrar todas
@@ -87,28 +103,24 @@ export class DashboardComponent implements OnInit {
     this.mostrarSoloHoy = false;
     this.filtroFechaInicio = '';
     this.filtroFechaFin = '';
-    this.aplicarFiltros(); // Aplicar filtro sin recargar
+    this.aplicarFiltros();
   }
 
   // Aplicar filtros a las carreras
   aplicarFiltros(): void {
     if (!this.todasLasCarreras.length) return;
     
-    // Filtrar las carreras según la fecha seleccionada
     this.carrerasFiltradas = this.filtrarCarrerasPorFecha(this.todasLasCarreras);
-    
-    // Actualizar carreras recientes (primeras 5 de las filtradas)
     this.carrerasRecientes = this.carrerasFiltradas.slice(0, 5);
-    
-    // Recalcular estadísticas con las carreras filtradas
     this.calcularEstadisticas(this.carrerasFiltradas);
+    
+    console.log('Carreras filtradas:', this.carrerasFiltradas.length);
   }
 
   loadData(): void {
     this.loading = true;
     this.apiService.getCarreras().subscribe({
       next: (response: any) => {
-        // Guardar todas las carreras originales
         if (response && response.data) {
           this.todasLasCarreras = response.data;
         } else if (Array.isArray(response)) {
@@ -116,12 +128,8 @@ export class DashboardComponent implements OnInit {
         } else {
           this.todasLasCarreras = [];
         }
-
-        console.log('Todas las carreras:', this.todasLasCarreras);
-        
-        // Aplicar filtros iniciales (mostrar solo hoy)
+       
         this.aplicarFiltros();
-        
         this.loading = false;
       },
       error: (err) => {
@@ -132,11 +140,10 @@ export class DashboardComponent implements OnInit {
   }
 
   calcularEstadisticas(carreras: Carrera[]): void {
-    // Obtener fecha actual en formato YYYY-MM-DD
-    const hoy = new Date();
-    const hoyStr = hoy.toISOString().split('T')[0];
+    const hoyStr = this.getFechaLocal(); // 👈 Usar fecha local
 
-    // Obtener año y mes actual
+    // Obtener año y mes actual (local)
+    const hoy = new Date();
     const añoActual = hoy.getFullYear();
     const mesActual = String(hoy.getMonth() + 1).padStart(2, '0');
     const mesInicioStr = `${añoActual}-${mesActual}-01`;
@@ -145,16 +152,14 @@ export class DashboardComponent implements OnInit {
     const ultimoDiaMes = new Date(añoActual, hoy.getMonth() + 1, 0);
     const mesFinStr = `${añoActual}-${mesActual}-${String(ultimoDiaMes.getDate()).padStart(2, '0')}`;
 
-    // Filtrar carreras de hoy (comparando strings directamente)
+    // Filtrar carreras de hoy
     const carrerasHoy = carreras.filter((c) => {
-      const fechaRegistro = c.fechaRegistro;
-      return fechaRegistro === hoyStr;
+      return c.fechaRegistro === hoyStr;
     });
 
     // Filtrar carreras del mes actual
     const carrerasMes = carreras.filter((c) => {
-      const fechaRegistro = c.fechaRegistro;
-      return fechaRegistro >= mesInicioStr && fechaRegistro <= mesFinStr;
+      return c.fechaRegistro >= mesInicioStr && c.fechaRegistro <= mesFinStr;
     });
 
     // Carreras activas (pendientes)
@@ -171,25 +176,25 @@ export class DashboardComponent implements OnInit {
     this.estadisticas.activas = carrerasActivas.length;
     this.estadisticas.clientes = new Set(carreras.map((c) => c.cliente)).size;
 
-    // Estadísticas de HOY (de las carreras filtradas)
+    // Estadísticas de HOY
     this.estadisticasHoy.total = carrerasHoy.length;
     this.estadisticasHoy.ingresos = carrerasHoy.reduce(
       (sum, c) => sum + (c.precio || 0),
       0,
     );
 
-    // Estadísticas del MES (de las carreras filtradas)
+    // Estadísticas del MES
     this.estadisticasMes.total = carrerasMes.length;
     this.estadisticasMes.ingresos = carrerasMes.reduce(
       (sum, c) => sum + (c.precio || 0),
       0,
     );
 
-    console.log('Estadísticas calculadas para carreras filtradas:', {
-      totalCarrerasFiltradas: carreras.length,
-      estadisticas: this.estadisticas,
-      hoy: this.estadisticasHoy,
-      mes: this.estadisticasMes,
+    console.log('Estadísticas:', {
+      fechaLocal: hoyStr,
+      carrerasHoy: carrerasHoy.length,
+      carrerasMes: carrerasMes.length,
+      totalFiltradas: carreras.length
     });
   }
 

@@ -35,6 +35,23 @@
       </div>
     </div>
   </div>
+
+  <!-- 👇 INDICADOR DE FILTRO ACTIVO - COLOCADO AQUÍ 👇 -->
+  <div
+    *ngIf="mostrarSoloHoy"
+    class="mb-4 p-2 bg-blue-50 text-blue-700 rounded-lg text-sm"
+  >
+    📅 Mostrando estadísticas solo del día de hoy ({{
+      getFechaLocal() | date: "dd/MM/yyyy"
+    }})
+  </div>
+
+  <div
+    *ngIf="!mostrarSoloHoy && !filtroFechaInicio && !filtroFechaFin"
+    class="mb-4 p-2 bg-gray-50 text-gray-700 rounded-lg text-sm"
+  >
+    📊 Mostrando todas las carreras
+  </div>
   <!-- Loading -->
   <div *ngIf="loading" class="flex items-center justify-center h-96">
     <div class="text-center">
