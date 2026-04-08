@@ -21,6 +21,7 @@ export class CarrerasComponent implements OnInit {
   estadoFiltro = '';
   showDeleteModal = false;
   carreraToDelete: Carrera | null = null;
+  filtroVisible: boolean = false;
 
   // Nuevos filtros de fecha
   filtroFechaInicio: string = '';
