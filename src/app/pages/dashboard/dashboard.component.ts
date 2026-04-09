@@ -208,32 +208,48 @@ export class DashboardComponent implements OnInit {
     const ultimoDiaMes = new Date(añoActual, hoy.getMonth() + 1, 0);
     const mesFinStr = `${añoActual}-${mesActual}-${String(ultimoDiaMes.getDate()).padStart(2, '0')}`;
 
-    const carrerasHoy = carreras.filter((c) => {
-      return c.fechaRegistro === hoyStr;
-    });
+    // ✅ FILTRO PRINCIPAL: Solo carreras CANCELADAS
+    const carrerasCanceladas = carreras.filter(
+      (c) => c.estado?.toLowerCase() === 'cancelado',
+    );
 
-    const carrerasMes = carreras.filter((c) => {
+    // Carreras CANCELADAS de hoy
+    const carrerasHoy = carrerasCanceladas.filter(
+      (c) => c.fechaRegistro === hoyStr,
+    );
+
+    // Carreras CANCELADAS del mes
+    const carrerasMes = carrerasCanceladas.filter((c) => {
       return c.fechaRegistro >= mesInicioStr && c.fechaRegistro <= mesFinStr;
     });
 
-    const carrerasActivas = carreras.filter(
-      (c) => c.estado?.toLowerCase() === 'pendiente',
-    );
-
-    this.estadisticas.total = carreras.length;
-    this.estadisticas.ingresos = carreras.reduce(
+    // Para estadísticas generales (como clientes únicos) podrías querer contar sobre todas
+    // Pero según tu requerimiento, los totales deben ser solo cancelados
+    this.estadisticas.total = carrerasCanceladas.length;
+    this.estadisticas.ingresos = carrerasCanceladas.reduce(
       (sum, c) => sum + (c.precio || 0),
       0,
     );
-    this.estadisticas.activas = carrerasActivas.length;
-    this.estadisticas.clientes = new Set(carreras.map((c) => c.cliente)).size;
 
+    // Opcional: Si quieres mostrar carreras activas (pendientes) en otro contexto
+    const carrerasActivas = carreras.filter(
+      (c) => c.estado?.toLowerCase() === 'pendiente',
+    );
+    this.estadisticas.activas = carrerasActivas.length;
+
+    // Clientes únicos de carreras canceladas
+    this.estadisticas.clientes = new Set(
+      carrerasCanceladas.map((c) => c.cliente),
+    ).size;
+
+    // Estadísticas de HOY (solo canceladas)
     this.estadisticasHoy.total = carrerasHoy.length;
     this.estadisticasHoy.ingresos = carrerasHoy.reduce(
       (sum, c) => sum + (c.precio || 0),
       0,
     );
 
+    // Estadísticas del MES (solo canceladas)
     this.estadisticasMes.total = carrerasMes.length;
     this.estadisticasMes.ingresos = carrerasMes.reduce(
       (sum, c) => sum + (c.precio || 0),
