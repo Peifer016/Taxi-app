@@ -165,7 +165,7 @@ export class CarrerasComponent implements OnInit {
         descripcion: carrera.descripcion,
         precio: carrera.precio,
         estado: carrera.estado.toLowerCase(), // Normalizar a minúsculas
-        fechaRegistro: carrera.fechaRegistro, // Ya es string "2026-04-07"
+        fechaRegistro: new Date().toLocaleDateString('en-CA'), // 'en-CA' da formato YYYY-MM-DD
         fechaPago: carrera.fechaPago || null,
       };
     } else {
@@ -175,7 +175,7 @@ export class CarrerasComponent implements OnInit {
         descripcion: '',
         precio: 0,
         estado: 'pendiente', // Minúscula
-        fechaRegistro: new Date().toISOString().split('T')[0], // Formato YYYY-MM-DD
+        fechaRegistro: new Date().toLocaleDateString('en-CA'), // 'en-CA' da formato YYYY-MM-DD
         fechaPago: null,
       };
     }
